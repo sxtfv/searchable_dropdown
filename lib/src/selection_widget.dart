@@ -75,6 +75,12 @@ class SelectionWidget<T> extends StatefulWidget {
   ///widget used to validate items in multiSelection mode
   final ValidationMultiSelectionBuilder<T>? popupValidationMultiSelectionWidget;
 
+  final bool supportsAdding;
+
+  final Widget? addModeTitle;
+
+  final Future<void> Function(String) addNewItem;
+
   const SelectionWidget({
     Key? key,
     this.popupTitle,
@@ -109,6 +115,9 @@ class SelectionWidget<T> extends StatefulWidget {
     this.popupSelectionWidget,
     this.isMultiSelectionMode = false,
     this.popupValidationMultiSelectionWidget,
+    this.supportsAdding = false,
+    this.addModeTitle,
+    required this.addNewItem,
   }) : super(key: key);
 
   @override
@@ -122,6 +131,8 @@ class _SelectionWidgetState<T> extends State<SelectionWidget<T>> {
   final List<T> _syncItems = [];
   final ValueNotifier<List<T>> _selectedItemsNotifier = ValueNotifier([]);
   late Debouncer _debouncer;
+  bool isSearchMode = true;
+  bool isAddButtonDisabled = false;
 
   List<T> get _selectedItems => _selectedItemsNotifier.value;
 
@@ -223,6 +234,45 @@ class _SelectionWidgetState<T> extends State<SelectionWidget<T>> {
               ],
             ),
           ),
+          if (!isSearchMode)
+            TextButton(
+              child: isAddButtonDisabled
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(),
+                        ),
+                        SizedBox(
+                          width: 12,
+                        ),
+                        Text('Add',
+                            style: TextStyle(
+                                color: Theme.of(context).primaryColor)),
+                      ],
+                    )
+                  : Text(
+                      'Add',
+                      style: TextStyle(color: Theme.of(context).primaryColor),
+                    ),
+              onPressed: isAddButtonDisabled
+                  ? null
+                  : () async {
+                      print('here');
+                      setState(() {
+                        isAddButtonDisabled = true;
+                      });
+                      await widget.addNewItem(
+                          widget.searchFieldProps?.controller?.text ?? '');
+                      setState(() {
+                        isAddButtonDisabled = false;
+                        isSearchMode = true;
+                      });
+                      print('here 2');
+                    },
+            ),
           _multiSelectionValidation(),
         ],
       ),
@@ -327,6 +377,8 @@ class _SelectionWidgetState<T> extends State<SelectionWidget<T>> {
   ///[isFirstLoad] true if it's the first time we load data from online, false other wises
   void _manageItemsByFilter(String filter, {bool isFistLoad = false}) async {
     _loadingNotifier.value = true;
+
+    print('Filter value: $filter');
 
     List<T> applyFilter(String? filter) {
       return _syncItems.where((i) {
@@ -460,7 +512,31 @@ class _SelectionWidgetState<T> extends State<SelectionWidget<T>> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          widget.popupTitle ?? const SizedBox.shrink(),
+          if (!widget.supportsAdding)
+            widget.popupTitle ?? const SizedBox.shrink(),
+          if (widget.supportsAdding)
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              if (isSearchMode)
+                Expanded(child: widget.popupTitle ?? const SizedBox.shrink()),
+              if (!isSearchMode)
+                Expanded(child: widget.addModeTitle ?? const SizedBox.shrink()),
+              if (isSearchMode)
+                IconButton(
+                    icon: Icon(Icons.add),
+                    onPressed: () {
+                      setState(() {
+                        isSearchMode = false;
+                      });
+                    }),
+              if (!isSearchMode)
+                IconButton(
+                    icon: Icon(Icons.search),
+                    onPressed: () {
+                      setState(() {
+                        isSearchMode = true;
+                      });
+                    }),
+            ]),
           if (widget.showSearchBox)
             Padding(
               padding: const EdgeInsets.all(8.0),

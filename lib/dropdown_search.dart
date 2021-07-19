@@ -248,6 +248,12 @@ class DropdownSearch<T> extends StatefulWidget {
   final ValidationMultiSelectionBuilder<T?>?
       popupValidationMultiSelectionWidget;
 
+  final bool supportsAdding;
+
+  final Future<void> Function(String) addNewItem;
+
+  final Widget? addModeTitle;
+
   DropdownSearch({
     Key? key,
     this.onSaved,
@@ -303,6 +309,9 @@ class DropdownSearch<T> extends StatefulWidget {
     this.dropdownSearchBaseStyle,
     this.dropdownSearchTextAlign,
     this.dropdownSearchTextAlignVertical,
+    this.supportsAdding = false,
+    this.addModeTitle,
+    required this.addNewItem,
   })  : assert(!showSelectedItems || T == String || compareFn != null),
         this.searchFieldProps = searchFieldProps ?? TextFieldProps(),
         this.isMultiSelectionMode = false,
@@ -377,6 +386,9 @@ class DropdownSearch<T> extends StatefulWidget {
     this.popupOnItemRemoved,
     this.popupSelectionWidget,
     this.popupValidationMultiSelectionWidget,
+    this.supportsAdding = false,
+    this.addModeTitle,
+    required this.addNewItem,
   })  : assert(!showSelectedItems || T == String || compareFn != null),
         this.searchFieldProps = searchFieldProps ?? TextFieldProps(),
         this.onChangedMultiSelection = onChange,
@@ -777,6 +789,9 @@ class DropdownSearchState<T> extends State<DropdownSearch<T>> {
       popupValidationMultiSelectionWidget:
           widget.popupValidationMultiSelectionWidget,
       isMultiSelectionMode: isMultiSelectionMode,
+      supportsAdding: widget.supportsAdding,
+      addNewItem: widget.addNewItem,
+      addModeTitle: widget.addModeTitle,
     );
   }
 
